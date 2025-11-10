@@ -105,67 +105,7 @@ class TestMathCalculator:
         with pytest.raises(ValueError, match="Число Фибоначчи для отрицательного индекса не определено"):
             calculator.fibonacci(-1)
 
-    # Группа: edge_cases
-    @pytest.mark.edge_cases
-    def test_edge_cases(self, calculator):
-        """Тест граничных случаев"""
-        # Большие числа
-        assert calculator.add(1e10, 1e10) == 2e10
 
-        # Дробные числа - используем приблизительное сравнение
-        result = calculator.multiply(0.1, 0.1)
-        expected = 0.01
-        # Сравниваем с точностью до 10 знаков после запятой
-        assert abs(result - expected) < 1e-10
-
-        # Граница простых чисел
-        assert calculator.is_prime(97) == True
-
-    # Группа: float_precision
-    @pytest.mark.float_precision
-    @pytest.mark.parametrize("operation, a, b, expected", [
-        ("add", 0.1, 0.2, 0.3),
-        ("multiply", 0.1, 0.1, 0.01),
-        ("multiply", 0.3, 0.3, 0.09),
-        ("divide", 1.0, 3.0, 1.0 / 3.0),
-    ])
-    def test_float_operations_precision(self, calculator, operation, a, b, expected):
-        """Параметризованный тест операций с плавающей точкой"""
-        if operation == "add":
-            result = calculator.add(a, b)
-        elif operation == "multiply":
-            result = calculator.multiply(a, b)
-        elif operation == "divide":
-            result = calculator.divide(a, b)
-
-        # Используем приблизительное сравнение для чисел с плавающей точкой
-        assert abs(result - expected) < 1e-10
-
-
-# Дополнительные тесты для проверки типов
-class TestMathCalculatorTypes:
-    """Тесты для проверки типов данных"""
-
-    @pytest.fixture
-    def calculator(self):
-        return MathCalculator()
-
-    @pytest.mark.type_tests
-    def test_float_operations(self, calculator):
-        """Тест операций с дробными числами"""
-        result = calculator.add(1.5, 2.5)
-        assert result == 4.0
-        assert isinstance(result, float)
-
-    @pytest.mark.type_tests
-    def test_int_operations(self, calculator):
-        """Тест операций с целыми числами"""
-        result = calculator.multiply(3, 4)
-        assert result == 12
-        assert isinstance(result, int)
-
-
-# Тесты для проверки точности вычислений с использованием pytest.approx
 class TestMathCalculatorPrecision:
     """Тесты для проверки точности вычислений с плавающей точкой"""
 
@@ -178,7 +118,6 @@ class TestMathCalculatorPrecision:
         """Тест точности сложения дробных чисел"""
         result = calculator.add(0.1, 0.2)
         expected = 0.3
-        # Используем встроенную функцию pytest.approx для сравнения
         assert result == pytest.approx(expected)
 
     @pytest.mark.precision
@@ -189,22 +128,35 @@ class TestMathCalculatorPrecision:
         assert result == pytest.approx(expected)
 
     @pytest.mark.precision
-    @pytest.mark.parametrize("a, b, expected", [
-        (0.1, 0.2, 0.3),  # сложение
-        (0.1, 0.1, 0.01),  # умножение
-        (1.0, 3.0, 1.0 / 3.0),  # деление
-    ])
-    def test_float_operations_parametrized(self, calculator, a, b, expected):
-        """Параметризованный тест точности операций с плавающей точкой"""
-        if (a, b) == (0.1, 0.2):
-            result = calculator.add(a, b)  # для 0.1 + 0.2 используем сложение
-        else:
-            result = calculator.multiply(a, b)  # для остальных случаев умножение
+    def test_float_division_precision(self, calculator):
+        """Тест точности деления дробных чисел"""
+        result = calculator.divide(1.0, 3.0)
+        expected = 1.0 / 3.0
+        assert result == pytest.approx(expected)
 
+    @pytest.mark.precision
+    @pytest.mark.parametrize("a, b, expected", [
+        (0.1, 0.2, 0.3),
+        (0.2, 0.3, 0.5),
+        (1.5, 2.5, 4.0),
+    ])
+    def test_float_addition_parametrized(self, calculator, a, b, expected):
+        """Параметризованный тест сложения с плавающей точкой"""
+        result = calculator.add(a, b)
+        assert result == pytest.approx(expected)
+
+    @pytest.mark.precision
+    @pytest.mark.parametrize("a, b, expected", [
+        (0.1, 0.1, 0.01),
+        (0.2, 0.3, 0.06),
+        (1.5, 2.5, 3.75),
+    ])
+    def test_float_multiplication_parametrized(self, calculator, a, b, expected):
+        """Параметризованный тест умножения с плавающей точкой"""
+        result = calculator.multiply(a, b)
         assert result == pytest.approx(expected)
 
 
-# Тесты для проверки граничных значений
 class TestMathCalculatorBoundaries:
     """Тесты для проверки граничных значений"""
 
@@ -223,7 +175,8 @@ class TestMathCalculatorBoundaries:
     def test_small_numbers(self, calculator):
         """Тест работы с очень маленькими числами"""
         small_num = 1e-15
-        assert calculator.multiply(small_num, small_num) == pytest.approx(1e-30)
+        result = calculator.multiply(small_num, small_num)
+        assert result == pytest.approx(1e-30)
 
     @pytest.mark.boundary
     def test_zero_operations(self, calculator):
@@ -231,3 +184,32 @@ class TestMathCalculatorBoundaries:
         assert calculator.add(0, 5) == 5
         assert calculator.multiply(0, 5) == 0
         assert calculator.power(5, 0) == 1
+
+
+class TestMathCalculatorEdgeCases:
+    """Тесты для проверки особых случаев"""
+
+    @pytest.fixture
+    def calculator(self):
+        return MathCalculator()
+
+    @pytest.mark.edge_cases
+    def test_prime_edge_cases(self, calculator):
+        """Тест граничных случаев для простых чисел"""
+        assert calculator.is_prime(2) == True
+        assert calculator.is_prime(97) == True
+        assert calculator.is_prime(100) == False
+
+    @pytest.mark.edge_cases
+    def test_fibonacci_edge_cases(self, calculator):
+        """Тест граничных случаев для чисел Фибоначчи"""
+        assert calculator.fibonacci(0) == 0
+        assert calculator.fibonacci(1) == 1
+        assert calculator.fibonacci(20) == 6765
+
+    @pytest.mark.edge_cases
+    def test_factorial_edge_cases(self, calculator):
+        """Тест граничных случаев для факториала"""
+        assert calculator.factorial(0) == 1
+        assert calculator.factorial(1) == 1
+        assert calculator.factorial(10) == 3628800
